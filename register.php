@@ -1,11 +1,19 @@
 <?php
 require ("functions/auth/auth.php");
 
-if ($_POST)
-{
-    register_admin($_POST["full_name"], $_POST["email"] ,$_POST["password"]);
-}
+$errors = [];
+$successMessage = "";
 
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $result = register_admin($_POST["full_name"], $_POST["email"], $_POST["password"]);
+
+    if ($result === true) {
+        $successMessage = "Registrace proběhla úspěšně!";
+        $_POST = []; // Vymaže hodnoty formuláře
+    } else {
+        $errors = $result;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -18,8 +26,12 @@ if ($_POST)
 <body>
 <h2>Registrace admina</h2>
 
+<?php if (!empty($successMessage)): ?>
+    <p style="color: green;"><?= htmlspecialchars($successMessage) ?></p>
+<?php endif; ?>
+
 <?php if (!empty($errors)): ?>
-    <ul>
+    <ul style="color: red;">
         <?php foreach ($errors as $error): ?>
             <li><?= htmlspecialchars($error) ?></li>
         <?php endforeach; ?>
