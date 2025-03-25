@@ -2,9 +2,9 @@
 
 // Nastavení připojení k databázi
 $host = 'localhost';
-$db = 'golemos';
-$user = 'panda';
-$pass = 'Vv53eLLDDs0peXk';
+$db = '';
+$user = '';
+$pass = '';
 $charset = 'utf8mb4';
 
 // Nastavení PDO

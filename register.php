@@ -1,5 +1,5 @@
 <?php
-require ("functions/auth/auth.php");
+require("functions/auth/auth.php");
 
 $errors = [];
 $successMessage = "";
