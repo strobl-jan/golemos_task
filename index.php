@@ -1,46 +1,65 @@
 <?php require "header.php"; ?>
 
+<!-- Hlavní obsah -->
+<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+    <h2 class="mt-4">Seznam uživatelů</h2>
 
+    <!-- Filtr -->
+    <div class="mb-3">
+        <label for="nameFilter" class="form-label">Filtrovat podle jména</label>
+        <input type="text" id="nameFilter" class="form-control" placeholder="Zadejte jméno..." onkeyup="filterUsers()">
+    </div>
 
-        <!-- Hlavní obsah -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <h2 class="mt-4">Seznam uživatelů</h2>
+    <!-- Filtrování dle data narození (rozmezí) -->
+    <div class="mb-3">
+        <label for="dobStartFilter" class="form-label">Od data narození</label>
+        <input type="date" id="dobStartFilter" class="form-control" onchange="filterUsers()">
+    </div>
+    <div class="mb-3">
+        <label for="dobEndFilter" class="form-label">Do data narození</label>
+        <input type="date" id="dobEndFilter" class="form-control" onchange="filterUsers()">
+    </div>
 
-            <!-- Tlačítko pro přidání uživatele -->
-            <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addUserModal">Přidat uživatele</button>
+    <!-- Tlačítko pro přidání uživatele -->
+    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addUserModal">Přidat uživatele</button>
 
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Jméno</th>
-                    <th>Datum narození</th>
-                    <th>Seznam koníčků</th>
-                    <th>Akce</th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php
-                $stmt = $pdo->query("SELECT * FROM golemos_users");
-                while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                    // Rozdělení koníčků podle čárky (ID koníčků)
-                    $hobbies_ids = explode(',', $user['hobbies']);
+    <table class="table table-striped" id="usersTable">
+        <thead>
+        <tr>
+            <th>
+                <a href="#" onclick="sortTable('name')">Jméno</a>
+            </th>
+            <th>
+                <a href="#" onclick="sortTable('dob')">Datum narození</a>
+            </th>
+            <th>Seznam koníčků</th>
+            <th>Akce</th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php
+        // Předdefinovaný SQL dotaz pro získání všech uživatelů
+        $stmt = $pdo->query("SELECT * FROM golemos_users");
+        while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            // Rozdělení koníčků podle čárky (ID koníčků)
+            $hobbies_ids = explode(',', $user['hobbies']);
 
-                    // Načtení názvů koníčků podle ID
-                    $hobbies_names = [];
-                    foreach ($hobbies_ids as $hobby_id) {
-                        $hobby_stmt = $pdo->prepare("SELECT name FROM golemos_hobbies WHERE id = ?");
-                        $hobby_stmt->execute([$hobby_id]);
-                        $hobby = $hobby_stmt->fetch(PDO::FETCH_ASSOC);
-                        if ($hobby) {
-                            $hobbies_names[] = $hobby['name'];
-                        }
-                    }
+            // Načtení názvů koníčků podle ID
+            $hobbies_names = [];
+            foreach ($hobbies_ids as $hobby_id) {
+                $hobby_stmt = $pdo->prepare("SELECT name FROM golemos_hobbies WHERE id = ?");
+                $hobby_stmt->execute([$hobby_id]);
+                $hobby = $hobby_stmt->fetch(PDO::FETCH_ASSOC);
+                if ($hobby) {
+                    $hobbies_names[] = $hobby['name'];
+                }
+            }
 
-                    // Sloučení názvů koníčků do jednoho řetězce
-                    $hobbies_list = implode(', ', $hobbies_names);
+            // Sloučení názvů koníčků do jednoho řetězce
+            $hobbies_list = implode(', ', $hobbies_names);
 
-                    // Zobrazení data narození ve formátu DD.MM.YYYY
-                    echo "<tr>
+            // Zobrazení data narození ve formátu DD.MM.YYYY
+            echo "<tr data-name='{$user['full_name']}' data-dob='{$user['date_of_birth']}'>
                 <td>{$user['full_name']}</td>
                 <td>" . date('d.m.Y', strtotime($user['date_of_birth'])) . "</td>
                 <td>{$hobbies_list}</td>
@@ -53,15 +72,71 @@
                    </button>
                 </td>
             </tr>";
-                }
-                ?>
-                </tbody>
-            </table>
+        }
+        ?>
+        </tbody>
+    </table>
+</main>
 
+<script>
+    // Filtrování uživatelů podle jména a data narození
+    function filterUsers() {
+        var nameFilter = document.getElementById('nameFilter').value.toLowerCase();
+        var dobStartFilter = document.getElementById('dobStartFilter').value;
+        var dobEndFilter = document.getElementById('dobEndFilter').value;
+        var rows = document.getElementById('usersTable').getElementsByTagName('tr');
 
-        </main>
-    </div>
-</div>
+        for (var i = 1; i < rows.length; i++) {
+            var nameCell = rows[i].getAttribute('data-name').toLowerCase();
+            var dobCell = rows[i].getAttribute('data-dob');
+
+            // Kontrola jména
+            var nameMatch = nameCell.indexOf(nameFilter) > -1;
+
+            // Kontrola data narození v rozmezí
+            var dobMatch = true;
+            if (dobStartFilter && new Date(dobCell) < new Date(dobStartFilter)) {
+                dobMatch = false;
+            }
+            if (dobEndFilter && new Date(dobCell) > new Date(dobEndFilter)) {
+                dobMatch = false;
+            }
+
+            // Zobrazit řádek pokud jméno a datum odpovídají filtru
+            if (nameMatch && dobMatch) {
+                rows[i].style.display = "";
+            } else {
+                rows[i].style.display = "none";
+            }
+        }
+    }
+
+    // Řazení tabulky
+    function sortTable(column) {
+        var table = document.getElementById("usersTable");
+        var rows = Array.from(table.rows).slice(1);
+        var isAscending = table.querySelector(`th a[onclick="sortTable('${column}')"]`).classList.toggle('asc', !table.querySelector('th a').classList.contains('asc'));
+
+        rows.sort(function(a, b) {
+            var cellA = a.getAttribute(`data-${column}`).toLowerCase();
+            var cellB = b.getAttribute(`data-${column}`).toLowerCase();
+
+            if (column === 'dob') {
+                cellA = new Date(cellA);
+                cellB = new Date(cellB);
+            }
+
+            if (isAscending) {
+                return (cellA < cellB ? -1 : (cellA > cellB ? 1 : 0));
+            } else {
+                return (cellA > cellB ? -1 : (cellA < cellB ? 1 : 0));
+            }
+        });
+
+        rows.forEach(row => table.appendChild(row));
+    }
+</script>
+
 
 <!-- Modální okno pro přidání uživatele -->
 <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
