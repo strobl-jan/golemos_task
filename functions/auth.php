@@ -62,7 +62,7 @@ function login_admin($email, $password)
 
     if (empty($errors)) {
         // Kontrola existence uživatele
-        $stmt = $pdo->prepare("SELECT id, password FROM golemos_admins WHERE email = ?");
+        $stmt = $pdo->prepare("SELECT * FROM golemos_admins WHERE email = ?");
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -70,6 +70,7 @@ function login_admin($email, $password)
             // Uložení přihlášení do session a přesměrování
             session_start();
             $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_name'] = $user['name'];
             header("Location: index.php");
             exit();
         } else {

@@ -26,7 +26,7 @@ if (!isset($_SESSION['user_id'])) {
         <!-- Odkazy pro Nastavení a Odhlášení -->
         <div class="d-flex ms-auto gap-2">
             <a href="settings.php" class="btn btn-primary">Nastavení</a>
-            <a href="logout.php" class="btn btn-danger">Odhlásit se</a>
+            <a href="login.php?action=logout" class="btn btn-danger">Odhlásit se</a>
         </div>
     </div>
 </nav>

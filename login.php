@@ -1,11 +1,22 @@
 <?php
 session_start();
-require("functions/auth/auth.php");
+
+
+require("functions/auth.php");
+
+$errors = [];
+
+if ($_GET["action"] == "logout")
+{
+    session_destroy();
+}
+
+
 if (isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit();
 }
-$errors = [];
+
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email = $_POST["email"];
@@ -18,16 +29,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit();
     }
 }
+require "header-log.php";
 ?>
 
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Přihlášení</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
 <body class="d-flex justify-content-center align-items-center vh-100 bg-light">
 
 <div class="card p-4 shadow" style="width: 350px;">
@@ -54,7 +58,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </div>
         <button type="submit" class="btn btn-primary w-100">Přihlásit se</button>
     </form>
+    <div class="text-center mt-3">
+        <a href="forgot_password.php">Zapomenuté heslo?</a>
+    </div>
 </div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

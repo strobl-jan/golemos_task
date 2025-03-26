@@ -1,50 +1,42 @@
 <?php
 require "config/connect.php";
-// Pokud je odeslán POST požadavek pro aktualizaci pořadí
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_position') {
-    $order = json_decode($_POST['order'], true);  // Načteme seznam pořadí
 
-    if ($order) {
+// Pokud je odeslán POST požadavek pro aktualizaci pořadí
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (isset($data['action']) && $data['action'] === 'update_position' && isset($data['order'])) {
         try {
-            // Aktualizace pořadí koníčků v databázi
-            foreach ($order as $index => $hobby) {
+            $pdo->beginTransaction();
+            foreach ($data['order'] as $index => $hobby) {
                 $stmt = $pdo->prepare("UPDATE golemos_hobbies SET position = :position WHERE id = :id");
                 $stmt->execute([
-                    ':position' => $hobby['position'],
+                    ':position' => $index + 1,
                     ':id' => $hobby['id']
                 ]);
             }
-
-            // Pokud bylo vše v pořádku, vrátíme úspěšnou odpověď
-            header('Content-Type: application/json');
+            $pdo->commit();
             echo json_encode(['success' => true]);
         } catch (Exception $e) {
-            // Chyba při provádění aktualizace
-            header('Content-Type: application/json');
+            $pdo->rollBack();
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }
         exit();
-    } else {
-        // Pokud je formát dat špatný
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'error' => 'Invalid data format']);
-        exit();
     }
 }
+
 include "header.php";
 ?><main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
     <h2>Správa koníčků</h2>
-
     <table class="table table-striped">
         <tbody id="hobby-table">
         <?php
-        // Načteme všechny koníčky z databáze podle jejich pozice
-        $stmt = $pdo->query("SELECT * FROM golemos_hobbies ORDER BY position");
+        $stmt = $pdo->query("SELECT * FROM golemos_hobbies ORDER BY position ASC");
         while ($hobby = $stmt->fetch(PDO::FETCH_ASSOC)) {
             echo "<tr class='hobby-item' data-id='{$hobby['id']}' draggable='true'>
-                        <td>{$hobby['name']}</td>
-                        <td>Pozice: {$hobby['position']}</td>
-                      </tr>";
+                    <td>{$hobby['name']}</td>
+                    <td class='position'>Pozice: {$hobby['position']}</td>
+                  </tr>";
         }
         ?>
         </tbody>
@@ -57,34 +49,31 @@ include "header.php";
         let draggedRow = null;
 
         tableBody.addEventListener('dragstart', (e) => {
-            if (e.target.tagName === 'TR') {
+            if (e.target.classList.contains('hobby-item')) {
                 draggedRow = e.target;
-                e.dataTransfer.effectAllowed = "move";
                 e.dataTransfer.setData("text/plain", draggedRow.dataset.id);
-                setTimeout(() => { draggedRow.classList.add('dragging'); }, 0);
+                setTimeout(() => draggedRow.classList.add('dragging'), 0);
             }
         });
 
         tableBody.addEventListener('dragover', (e) => {
             e.preventDefault();
             const afterElement = getDragAfterElement(tableBody, e.clientY);
-            if (afterElement) {
-                tableBody.insertBefore(draggedRow, afterElement);
-            } else {
+            if (afterElement == null) {
                 tableBody.appendChild(draggedRow);
+            } else {
+                tableBody.insertBefore(draggedRow, afterElement);
             }
         });
 
         tableBody.addEventListener('dragend', () => {
             draggedRow.classList.remove('dragging');
-            draggedRow = null;
             updateOrder();
         });
 
         function getDragAfterElement(container, y) {
-            const rows = [...container.querySelectorAll('.hobby-item:not(.dragging)')];
-
-            return rows.reduce((closest, child) => {
+            const draggableElements = [...container.querySelectorAll('.hobby-item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
                 const box = child.getBoundingClientRect();
                 const offset = y - box.top - box.height / 2;
                 return offset < 0 && offset > closest.offset ? { offset, element: child } : closest;
@@ -105,9 +94,7 @@ include "header.php";
             })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
-                        alert('Pořadí aktualizováno!');
-                    } else {
+                    if (!data.success) {
                         alert('Chyba: ' + data.error);
                     }
                 })
@@ -117,7 +104,6 @@ include "header.php";
                 });
         }
     });
-
 </script>
 
 </body>

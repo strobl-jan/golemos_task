@@ -2,9 +2,9 @@
 
 // Nastavení připojení k databázi
 $host = 'localhost';
-$db = '';
-$user = '';
-$pass = '';
+$db = 'xxx';
+$user = 'xxx';
+$pass = 'xxx';
 $charset = 'utf8mb4';
 
 // Nastavení PDO
