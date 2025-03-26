@@ -116,31 +116,34 @@
 <?php
 $stmt = $pdo->query("SELECT * FROM golemos_users");
 while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    echo "
-    <div class='modal fade' id='editUserModal{$user['id']}' tabindex='-1' aria-labelledby='editUserModalLabel{$user['id']}' aria-hidden='true'>
+    ?>
+    <div class='modal fade' id='editUserModal<?php echo $user['id']; ?>' tabindex='-1'>
         <div class='modal-dialog'>
             <div class='modal-content'>
                 <div class='modal-header'>
-                    <h5 class='modal-title' id='editUserModalLabel{$user['id']}'>Upravit uživatele</h5>
-                    <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                    <h5 class='modal-title'>Upravit uživatele</h5>
+                    <button type='button' class='btn-close' data-bs-dismiss='modal'></button>
                 </div>
                 <form action='functions/users.php' method='POST'>
                     <div class='modal-body'>
                         <div class='mb-3'>
-                            <label for='full_name' class='form-label'>Jméno</label>
-                            <input type='text' name='full_name' class='form-control' value='{$user['full_name']}' required>
+                            <label class='form-label'>Jméno</label>
+                            <input type='text' name='full_name' class='form-control' value='<?php echo $user['full_name']; ?>' required>
                         </div>
                         <div class='mb-3'>
-                            <label for='date_of_birth' class='form-label'>Datum narození</label>
-                            <input type='date' name='date_of_birth' class='form-control' value='{$user['date_of_birth']}' required>
+                            <label class='form-label'>Datum narození</label>
+                            <input type='date' name='date_of_birth' class='form-control' value='<?php echo $user['date_of_birth']; ?>' required>
                         </div>
                         <div class='mb-3'>
-                            <label for='hobbies' class='form-label'>Koníčky</label>
+                            <label class='form-label'>Koníčky</label>
                             <select name='hobbies[]' class='form-select' multiple required>
-                                <option value='sport' ".(in_array('sport', explode(',', $user['hobbies'])) ? 'selected' : '').">Sport</option>
-                                <option value='čtení' ".(in_array('čtení', explode(',', $user['hobbies'])) ? 'selected' : '').">Čtení</option>
-                                <option value='cestování' ".(in_array('cestování', explode(',', $user['hobbies'])) ? 'selected' : '').">Cestování</option>
-                                <option value='hudba' ".(in_array('hudba', explode(',', $user['hobbies'])) ? 'selected' : '').">Hudba</option>
+                                <?php
+                                $hobby_stmt = $pdo->query("SELECT id, name FROM golemos_hobbies");
+                                while ($hobby = $hobby_stmt->fetch(PDO::FETCH_ASSOC)) {
+                                    $selected = in_array($hobby['id'], explode(',', $user['hobbies'])) ? 'selected' : '';
+                                    echo "<option value='{$hobby['id']}' $selected>{$hobby['name']}</option>";
+                                }
+                                ?>
                             </select>
                         </div>
                     </div>
@@ -148,12 +151,13 @@ while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
                         <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Zrušit</button>
                         <button type='submit' class='btn btn-primary'>Upravit</button>
                     </div>
-                    <input type='hidden' name='action' value='edit'> <!-- Určuje akci -->
-                    <input type='hidden' name='user_id' value='{$user['id']}'> <!-- Určuje ID uživatele -->
+                    <input type='hidden' name='action' value='edit'>
+                    <input type='hidden' name='user_id' value='<?php echo $user['id']; ?>'>
                 </form>
             </div>
         </div>
-    </div>";
+    </div>
+    <?php
 }
 ?>
 

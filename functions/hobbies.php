@@ -1,5 +1,5 @@
 <?php
-
+require 'config/connect.php'; // Připojení k databázi
 function add_hobby() {
     global $pdo;
 
